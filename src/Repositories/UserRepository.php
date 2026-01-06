@@ -96,8 +96,6 @@ class UserRepository
             $result['name'],
             $result['email'],
             $result['password'],
-            $result['created_at'],
-            $result['updated_at']
         );
     }
 
