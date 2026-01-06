@@ -3,6 +3,8 @@
 namespace Src\Repositories;
 
 use PDO;
+use PDOException;
+use Exception;
 use Src\Models\User;
 
 class UserRepository
@@ -29,16 +31,15 @@ class UserRepository
                   VALUES (:name, :email, :password, NOW())';
         $stmt = $this->db->prepare($query);
 
-        $hashedPassword = password_hash($user->getPassword(), PASSWORD_BCRYPT);
 
         try {
             $stmt->execute([
                 'name' => $user->getName(),
                 'email' => $user->getEmail(),
-                'password' => $hashedPassword
+                'password' => $user->getPassword()
             ]);
-        } catch (\PDOException $e) {
-            throw new \Exception("Erreur lors de la création de l'utilisateur : " . $e->getMessage());
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors de la création de l'utilisateur : " . $e->getMessage());
         }
     }
 
@@ -49,7 +50,6 @@ class UserRepository
      */
     public function updateUser(User $user): void
     {
-        // Si le mot de passe est fourni, on le hash, sinon on ne change pas le password
         $fields = [
             'id' => $user->getId(),
             'name' => $user->getName(),
@@ -58,10 +58,9 @@ class UserRepository
 
         $query = 'UPDATE users SET name = :name, email = :email';
 
-        if ($user->getPassword()) {
-            $hashedPassword = password_hash($user->getPassword(), PASSWORD_BCRYPT);
+        if ($user->getPassword() !== null) {
             $query .= ', password = :password';
-            $fields['password'] = $hashedPassword;
+            $fields['password'] = $user->getPassword();
         }
 
         $query .= ', updated_at = NOW() WHERE id = :id';
@@ -70,8 +69,8 @@ class UserRepository
 
         try {
             $stmt->execute($fields);
-        } catch (\PDOException $e) {
-            throw new \Exception("Erreur lors de la mise à jour de l'utilisateur : " . $e->getMessage());
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors de la mise à jour de l'utilisateur : " . $e->getMessage());
         }
     }
 
@@ -92,11 +91,14 @@ class UserRepository
         }
 
         return new User(
-            $result['id'],
+            (int) $result['id'],
             $result['name'],
             $result['email'],
             $result['password'],
+            $result['created_at'],
+            $result['updated_at']
         );
+
     }
 
     /**
@@ -111,8 +113,8 @@ class UserRepository
 
         try {
             $stmt->execute(['id' => $id]);
-        } catch (\PDOException $e) {
-            throw new \Exception("Erreur lors de la suppression de l'utilisateur : " . $e->getMessage());
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors de la suppression de l'utilisateur : " . $e->getMessage());
         }
     }
 }
