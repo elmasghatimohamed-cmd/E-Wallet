@@ -1,5 +1,5 @@
 <?php
-namespace Src\config;
+namespace Src\Config;
 
 use Dotenv\Dotenv;
 use PDO;
@@ -73,7 +73,6 @@ class Database
      */
     public function getConnection(): PDO
     {
-        echo 'Connexion à la base de données établie.';
         return $this->db;
     }
 }

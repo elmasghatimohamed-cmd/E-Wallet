@@ -4,6 +4,7 @@ namespace Src\Repositories;
 
 use PDO;
 use PDOException;
+use PDOStatement;
 use Exception;
 use Src\Models\User;
 
@@ -25,7 +26,7 @@ class UserRepository
      * @param User $user
      * @return void
      */
-    public function createUser(User $user): void
+    public function createUser(User $user): int
     {
         $query = 'INSERT INTO users (name, email, password, created_at) 
                   VALUES (:name, :email, :password, NOW())';
@@ -38,6 +39,8 @@ class UserRepository
                 'email' => $user->getEmail(),
                 'password' => $user->getPassword()
             ]);
+
+            return (int) $this->db->lastInsertId();
         } catch (PDOException $e) {
             throw new Exception("Erreur lors de la création de l'utilisateur : " . $e->getMessage());
         }
@@ -100,6 +103,34 @@ class UserRepository
         );
 
     }
+
+    /**
+     * Summary of getUserByEmail 
+     * @param string $email
+     * @return User|null
+     */
+    public function getUserByEmail(string $email): ?User
+    {
+        $query = 'SELECT * FROM users WHERE email = :email LIMIT 1';
+        $stmt = $this->db->prepare($query);
+        $stmt->execute(['email' => $email]);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$result) {
+            return null;
+        }
+
+        return new User(
+            (int) $result['id'],
+            $result['name'],
+            $result['email'],
+            $result['password'],
+            $result['created_at'],
+            $result['updated_at']
+        );
+    }
+
 
     /**
      * Summary of deleteUser
